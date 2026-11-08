@@ -53,6 +53,7 @@ class ClauthServiceProvider extends ServiceProvider
                 Route::get('callback', [ClauthController::class, 'callback'])->name('clauth.callback');
                 Route::match(['get', 'post'], 'logout', [ClauthController::class, 'logout'])->name('clauth.logout');
                 Route::get('bar', [ClauthController::class, 'bar'])->name('clauth.bar');
+                Route::post('bar/read', [ClauthController::class, 'barRead'])->name('clauth.bar.read');
             });
         }
     }

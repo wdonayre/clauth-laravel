@@ -145,6 +145,20 @@ document.querySelector('clauth-bar').addEventListener('clauth-org-change', (e) =
 });
 ```
 
+**What's new.** The bar has a bell with an unread count for release notes posted in Clauth (Admin › Updates, or by
+the app itself — see below). Opening it marks them read through `POST /auth/clauth/bar/read` (a kit route; the bar
+sends Laravel's `X-XSRF-TOKEN`). To post notes from your deploy script, register a *Server-to-server* client on the
+app in Clauth and:
+
+```bash
+TOKEN=$(curl -s https://auth.thecakelabs.com/oauth/token -d grant_type=client_credentials \
+  -d client_id=$CLAUTH_M2M_ID -d client_secret=$CLAUTH_M2M_SECRET -d scope=updates:write | jq -r .access_token)
+curl -s https://auth.thecakelabs.com/api/v1/release-notes -H "Authorization: Bearer $TOKEN" \
+  -d version=v0.17.0 -d title="Receipts upload faster" --data-urlencode body="$(cat RELEASE_NOTES.txt)"
+```
+
+Posting the same `version` again updates that note instead of adding another.
+
 Tell the bar which org the page shows with `@clauthBar($orgSlug)` (or the `org` attribute) when it isn't the cookie.
 Clauth › Apps shows "Clauth bar: seen …" for each app, so you can see which apps have it.
 

@@ -75,6 +75,21 @@ class ClauthController
         return response()->json($data)->header('Cache-Control', 'private, no-store');
     }
 
+    /** The bar's "What's new" was opened: mark those release notes read in Clauth. */
+    public function barRead(Request $request)
+    {
+        $token = $request->session()->get('clauth.access_token');
+        if (! Auth::guard($this->clauth->config('users.guard'))->check() || ! $token || ! $this->clauth->refreshSession($request)) {
+            return response()->json(['error' => 'unauthenticated'], 401);
+        }
+        $ids = array_values(array_filter(array_map('intval', (array) $request->input('ids', []))));
+        $res = \Illuminate\Support\Facades\Http::withToken($request->session()->get('clauth.access_token'))->acceptJson()->timeout(5)
+            ->post(rtrim($this->clauth->config('issuer'), '/').'/api/v1/bar/read', $ids ? ['ids' => $ids] : ['all' => true]);
+        $request->session()->forget('clauth.bar');
+
+        return response()->json($res->json() ?? [], $res->ok() ? 200 : 502);
+    }
+
     public function manifest()
     {
         return response()->json($this->clauth->manifest())->header('Cache-Control', 'public, max-age=300');
