@@ -1,0 +1,22 @@
+{
+    "name": "wdonayre/clauth-laravel",
+    "description": "Sign in to Laravel apps with Clauth (auth.thecakelabs.com): Socialite provider, offline JWT checks, per-org permission middleware, manifest route.",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0",
+        "illuminate/http": "^11.0|^12.0",
+        "laravel/socialite": "^5.15",
+        "firebase/php-jwt": "^6.10|^7.0"
+    },
+    "autoload": {
+        "psr-4": { "Clauth\\Laravel\\": "src/" }
+    },
+    "extra": {
+        "laravel": {
+            "providers": ["Clauth\\Laravel\\ClauthServiceProvider"],
+            "aliases": { "Clauth": "Clauth\\Laravel\\Facades\\Clauth" }
+        }
+    }
+}
