@@ -62,7 +62,8 @@ class Clauth
     {
         $request = request();
         $org = $request->header($this->config['org_header'] ?? 'X-Organization')
-            ?: $request->route($this->config['org_route_parameter'] ?? 'org');
+            ?: $request->route($this->config['org_route_parameter'] ?? 'org')
+            ?: $request->cookie('clauth_org'); // set by the Clauth bar's organization menu
         if (is_object($org)) {
             $org = $org->slug ?? null;
         }
@@ -81,6 +82,72 @@ class Clauth
         ]));
 
         return $res->ok() && $res->json('access_token') ? $res->json() : null;
+    }
+
+    /**
+     * Keep the browser session's Clauth tokens fresh (refresh when < 60 s left). Returns false when Clauth
+     * refuses (revoked, disabled, no access any more) — the caller should end the session.
+     */
+    public function refreshSession(\Illuminate\Http\Request $request): bool
+    {
+        $s = $request->session();
+        if (! $s->has('clauth.refresh_token') || (int) $s->get('clauth.expires_at', 0) >= time() + 60) {
+            return true;
+        }
+        $res = $this->refresh($s->get('clauth.refresh_token'));
+        try {
+            $token = $res ? $this->verify($res['access_token']) : null;
+        } catch (InvalidTokenException) {
+            $token = null;
+        }
+        if (! $token) {
+            return false;
+        }
+        $s->put([
+            'clauth.claims' => $token->claims, 'clauth.access_token' => $res['access_token'], 'clauth.expires_at' => $token->expiresAt(),
+            'clauth.refresh_token' => $res['refresh_token'] ?? $s->get('clauth.refresh_token'),
+            'clauth.id_token' => $res['id_token'] ?? $s->get('clauth.id_token'),
+        ]);
+        $s->forget('clauth.bar');
+        $this->setCurrent($token);
+
+        return true;
+    }
+
+    /** Data for the Clauth bar, fetched with this session's access token (cached 60 s in the session). */
+    public function barData(\Illuminate\Http\Request $request): ?array
+    {
+        $s = $request->session();
+        $cached = $s->get('clauth.bar');
+        if ($cached && ($cached['at'] ?? 0) > time() - 60) {
+            return $cached['data'];
+        }
+        $token = $s->get('clauth.access_token');
+        if (! $token) {
+            return null;
+        }
+        $res = Http::withToken($token)->acceptJson()->timeout(5)->get(rtrim($this->config['issuer'], '/').'/api/v1/bar');
+        if (! $res->ok()) {
+            return null;
+        }
+        $s->put('clauth.bar', ['at' => time(), 'data' => $res->json()]);
+
+        return $res->json();
+    }
+
+    /** HTML for @clauthBar: the script tag + <clauth-bar>. Empty unless Clauth is on and this session came from Clauth. */
+    public function barHtml(?string $org = null): string
+    {
+        $request = request();
+        if (! $this->enabled() || ! ($this->config['bar']['enabled'] ?? true) || ! $request->hasSession()
+            || ! $request->session()->has('clauth.access_token')) {
+            return '';
+        }
+        $e = fn ($v) => e((string) $v);
+        $org ??= $this->currentOrg();
+
+        return '<script src="'.$e(rtrim($this->config['issuer'], '/').'/bar/v1').'" defer></script>'
+            .'<clauth-bar src="'.$e(route('clauth.bar')).'" logout="'.$e(route('clauth.logout')).'"'.($org ? ' org="'.$e($org).'"' : '').'></clauth-bar>';
     }
 
     /** Clauth sign-out URL (ends the Clauth session too). The redirect must be registered on the client. */

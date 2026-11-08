@@ -8,7 +8,8 @@ Sign in to a Laravel app with **Clauth** (https://auth.thecakelabs.com). One pac
 - per-organization permission checks: middleware `clauth.can:…`, `$user->clauthCan(…)`;
 - `clauth.fresh`, which refreshes the session token so role changes land within 15 min and disabled users get signed out;
 - `clauth.api` for bearer-token APIs (mobile apps, SPAs, other servers);
-- your permissions manifest at `/.well-known/clauth.json`, built from `config/clauth.php`.
+- your permissions manifest at `/.well-known/clauth.json`, built from `config/clauth.php`;
+- the required **Clauth bar** via `@clauthBar`.
 
 The rule (SPEC §4): **the app defines permissions and enforces them; Clauth decides who has which role in which
 organization.** Data rules (own team, ₱ limits, "only my store") stay in the app.
@@ -118,6 +119,34 @@ Clauth::resolveUsersUsing(function (\Clauth\Laravel\Socialite\ClauthUser $su, \C
     return \App\Models\User::firstWhere('clauth_sub', $t->sub());   // return null to refuse
 });
 ```
+
+### 6. Add the Clauth bar (required)
+
+Every connected app shows the same Clauth top bar: current app, organization switcher, app launcher, account
+menu. Put this right after `<body>` in the staff layout:
+
+```blade
+@clauthBar
+```
+
+It renders only for people signed in through Clauth (so customers and the old login never see it). It loads
+`https://auth.thecakelabs.com/bar/v1` and reads `/auth/clauth/bar` (a kit route that asks Clauth with the session's
+token — the browser never holds a Clauth token). Allow it in your CSP: `script-src https://auth.thecakelabs.com`.
+
+**Organization switcher.** It appears when the person uses this app in more than one org. Picking one fires a
+cancelable `clauth-org-change` event (`event.detail.org` = slug) on `<clauth-bar>`. If you don't handle it, the bar
+saves the `clauth_org` cookie and reloads, and `Clauth::currentOrg()` picks it up. SPAs that keep their own org
+state can do this instead:
+
+```js
+document.querySelector('clauth-bar').addEventListener('clauth-org-change', (e) => {
+  e.preventDefault();               // keep the page, no reload
+  setActiveOrg(e.detail.org);       // your app's own switch (e.g. the X-Organization header)
+});
+```
+
+Tell the bar which org the page shows with `@clauthBar($orgSlug)` (or the `org` attribute) when it isn't the cookie.
+Clauth › Apps shows "Clauth bar: seen …" for each app, so you can see which apps have it.
 
 ---
 

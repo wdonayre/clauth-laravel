@@ -26,6 +26,12 @@ class ClauthServiceProvider extends ServiceProvider
         $this->publishes([__DIR__.'/../config/clauth.php' => config_path('clauth.php')], 'clauth-config');
         $this->publishesMigrations([__DIR__.'/../database/migrations' => database_path('migrations')], 'clauth-migrations');
 
+        // The bar's organization menu writes a plain cookie; let it through unencrypted.
+        \Illuminate\Cookie\Middleware\EncryptCookies::except(['clauth_org']);
+
+        // @clauthBar — the required Clauth top bar. Renders only for people signed in through Clauth.
+        \Illuminate\Support\Facades\Blade::directive('clauthBar', fn ($org = null) => "<?php echo app(\\Clauth\\Laravel\\Clauth::class)->barHtml({$org}); ?>");
+
         $router->aliasMiddleware('clauth.api', AuthenticateWithClauthToken::class);
         $router->aliasMiddleware('clauth.can', RequireClauthPermission::class);
         $router->aliasMiddleware('clauth.fresh', KeepClauthSessionFresh::class);
@@ -46,6 +52,7 @@ class ClauthServiceProvider extends ServiceProvider
                 Route::get('redirect', [ClauthController::class, 'redirect'])->name('clauth.redirect');
                 Route::get('callback', [ClauthController::class, 'callback'])->name('clauth.callback');
                 Route::match(['get', 'post'], 'logout', [ClauthController::class, 'logout'])->name('clauth.logout');
+                Route::get('bar', [ClauthController::class, 'bar'])->name('clauth.bar');
             });
         }
     }

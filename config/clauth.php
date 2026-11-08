@@ -21,6 +21,12 @@ return [
         'after_logout' => '/',                // must be listed in the client's "After sign-out URLs" in Clauth
     ],
 
+    // The Clauth bar (required in every connected app): put @clauthBar at the top of the staff layout's <body>.
+    // Your CSP must allow script-src https://auth.thecakelabs.com (and img-src for app icons).
+    'bar' => [
+        'enabled' => true,
+    ],
+
     // Local user linking: by `sub` (users.clauth_sub). First sign-in may link an existing account by email.
     'users' => [
         'model' => env('CLAUTH_USER_MODEL', 'App\\Models\\User'),

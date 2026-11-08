@@ -62,6 +62,19 @@ class ClauthController
         return redirect()->away($this->clauth->logoutUrl($idToken));
     }
 
+    /** JSON for the Clauth bar (same-origin, so the browser never holds a Clauth token). */
+    public function bar(Request $request)
+    {
+        if (! Auth::guard($this->clauth->config('users.guard'))->check() || ! $request->session()->has('clauth.access_token')) {
+            return response()->json(['error' => 'unauthenticated'], 401);
+        }
+        if (! $this->clauth->refreshSession($request) || ! ($data = $this->clauth->barData($request))) {
+            return response()->json(['error' => 'session_ended'], 401);
+        }
+
+        return response()->json($data)->header('Cache-Control', 'private, no-store');
+    }
+
     public function manifest()
     {
         return response()->json($this->clauth->manifest())->header('Cache-Control', 'public, max-age=300');
