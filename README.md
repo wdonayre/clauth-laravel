@@ -31,7 +31,8 @@ role change applied after refresh, disabled user signed out, `clauth.api` 401/20
 ### 2. In the app
 
 ```bash
-composer require wdonayre/clauth-laravel        # see "Installing the package" below
+# see "Installing the package" below for the repository line
+composer require wdonayre/clauth-laravel:^0.1
 php artisan vendor:publish --tag=clauth-config
 php artisan vendor:publish --tag=clauth-migrations && php artisan migrate   # adds users.clauth_sub
 ```
@@ -149,9 +150,11 @@ that person out of the app everywhere.
 Private repo **wdonayre/clauth-laravel** (releases are `v*` tags). In each app:
 
 ```bash
-composer config repositories.clauth vcs git@github.com:wdonayre/clauth-laravel.git
+composer config repositories.clauth '{"type":"vcs","url":"git@github.com:wdonayre/clauth-laravel.git","no-api":true}'
 composer require wdonayre/clauth-laravel:^0.1
 ```
+
+During install, a "zipball … 404" warning is normal (private repo, no GitHub token); Composer falls back to git.
 
 The app's production server must be able to read this repo: add the server's deploy public key to
 **wdonayre/clauth-laravel › Settings › Deploy keys** (read-only). GitHub doesn't allow one deploy key on two
