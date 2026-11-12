@@ -120,6 +120,13 @@ Clauth::resolveUsersUsing(function (\Clauth\Laravel\Socialite\ClauthUser $su, \C
 });
 ```
 
+### Optional: the app's own sign-in domain
+
+If the app has a custom sign-in domain in Clauth (Apps › your app › Sign-in page › Custom domain, status **Active**),
+add `CLAUTH_LOGIN_URL=https://auth.yourapp.com` to `.env`. Sign-in and sign-out then happen on that address; tokens
+still come from `CLAUTH_ISSUER` (keep it `https://auth.thecakelabs.com`), and one sign-in still covers every app.
+Leave it unset until the domain shows **Active**.
+
 ### 6. Add the Clauth bar (required)
 
 Every connected app shows the same Clauth top bar: current app, organization switcher, app launcher, account

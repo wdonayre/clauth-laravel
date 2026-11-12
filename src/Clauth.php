@@ -155,7 +155,7 @@ class Clauth
     {
         $redirect ??= url($this->config['routes']['after_logout'] ?? '/');
 
-        return rtrim($this->config['issuer'], '/').'/oauth/logout?'.http_build_query(array_filter([
+        return rtrim(($this->config['login_url'] ?? null) ?: $this->config['issuer'], '/').'/oauth/logout?'.http_build_query(array_filter([
             'id_token_hint' => $idToken, 'client_id' => $idToken ? null : $this->config['client_id'],
             'post_logout_redirect_uri' => $redirect,
         ]));

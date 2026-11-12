@@ -41,7 +41,7 @@ class ClauthServiceProvider extends ServiceProvider
             $redirect = str_starts_with((string) $c['redirect'], 'http') ? $c['redirect'] : url($c['redirect']);
 
             return (new ClauthProvider($app['request'], (string) $c['client_id'], (string) ($c['client_secret'] ?? ''), $redirect))
-                ->setClauth($c['issuer'], $app->make(TokenVerifier::class));
+                ->setClauth($c['issuer'], $app->make(TokenVerifier::class), $c['login_url'] ?? null);
         });
 
         // The manifest is always served; sign-in routes only when CLAUTH_ENABLED=true.

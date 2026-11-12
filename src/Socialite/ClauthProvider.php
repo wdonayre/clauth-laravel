@@ -21,9 +21,12 @@ class ClauthProvider extends AbstractProvider
 
     protected TokenVerifier $verifier;
 
-    public function setClauth(string $issuer, TokenVerifier $verifier): static
+    protected string $loginBase;
+
+    public function setClauth(string $issuer, TokenVerifier $verifier, ?string $loginUrl = null): static
     {
         $this->issuer = rtrim($issuer, '/');
+        $this->loginBase = rtrim($loginUrl ?: $issuer, '/');
         $this->verifier = $verifier;
 
         return $this;
@@ -31,7 +34,7 @@ class ClauthProvider extends AbstractProvider
 
     protected function getAuthUrl($state): string
     {
-        return $this->buildAuthUrlFromBase($this->issuer.'/oauth/authorize', $state);
+        return $this->buildAuthUrlFromBase($this->loginBase.'/oauth/authorize', $state);
     }
 
     protected function getCodeFields($state = null): array
