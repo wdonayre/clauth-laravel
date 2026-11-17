@@ -1,6 +1,6 @@
 {
     "name": "wdonayre/clauth-laravel",
-    "description": "Sign in to Laravel apps with Clauth (auth.cebos.tech): Socialite provider, offline JWT checks, per-org permission middleware, manifest route.",
+    "description": "Sign in to Laravel apps with Clauth (auth.thecakelabs.com): Socialite provider, offline JWT checks, per-org permission middleware, manifest route.",
     "type": "library",
     "license": "proprietary",
     "require": {
