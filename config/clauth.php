@@ -2,7 +2,7 @@
 
 return [
     // Connection (Clauth › Apps › your app › Integration shows these values)
-    'issuer' => env('CLAUTH_ISSUER', 'https://auth.thecakelabs.com'),
+    'issuer' => env('CLAUTH_ISSUER', 'https://auth.cebos.tech'),
     // Optional: the app's own Clauth sign-in domain (Clauth › Apps › Sign-in page › Custom domain), e.g.
     // https://auth.cebpos.com. Only sign-in/sign-out pages move there; tokens keep the issuer above.
     'login_url' => env('CLAUTH_LOGIN_URL'),
@@ -25,7 +25,7 @@ return [
     ],
 
     // The Clauth bar (required in every connected app): put @clauthBar at the top of the staff layout's <body>.
-    // Your CSP must allow script-src https://auth.thecakelabs.com (and img-src for app icons).
+    // Your CSP must allow script-src https://auth.cebos.tech (and img-src for app icons).
     'bar' => [
         'enabled' => true,
     ],
