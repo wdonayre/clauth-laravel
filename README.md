@@ -1,6 +1,6 @@
 # clauth-laravel
 
-Sign in to a Laravel app with **Clauth** (https://auth.thecakelabs.com). One package per app gives you:
+Sign in to a Laravel app with **[Clauth](https://helloclauth.com)**, the open-source OIDC server. One package per app gives you:
 
 - a Socialite driver `clauth` (Authorization Code + PKCE + nonce, which Clauth requires);
 - ready routes `/auth/clauth/redirect`, `/auth/clauth/callback`, `/auth/clauth/logout`;
@@ -42,11 +42,11 @@ php artisan vendor:publish --tag=clauth-migrations && php artisan migrate   # ad
 
 ```dotenv
 CLAUTH_ENABLED=false            # flip to true when ready — the kit does nothing to sign-in until then
-CLAUTH_ISSUER=https://auth.thecakelabs.com
+CLAUTH_ISSUER=https://auth.example.com
 CLAUTH_AUDIENCE=xpenses
 CLAUTH_CLIENT_ID=…
 CLAUTH_CLIENT_SECRET=…
-CLAUTH_REDIRECT_URI=https://expenses.thecakelabs.com/auth/clauth/callback
+CLAUTH_REDIRECT_URI=https://app.example.com/auth/clauth/callback
 ```
 
 User model:
@@ -124,7 +124,7 @@ Clauth::resolveUsersUsing(function (\Clauth\Laravel\Socialite\ClauthUser $su, \C
 
 If the app has a custom sign-in domain in Clauth (Apps › your app › Sign-in page › Custom domain, status **Active**),
 add `CLAUTH_LOGIN_URL=https://auth.yourapp.com` to `.env`. Sign-in and sign-out then happen on that address; tokens
-still come from `CLAUTH_ISSUER` (keep it `https://auth.thecakelabs.com`), and one sign-in still covers every app.
+still come from `CLAUTH_ISSUER` (keep it your main Clauth address), and one sign-in still covers every app.
 Leave it unset until the domain shows **Active**.
 
 ### 6. Add the Clauth bar (required)
@@ -137,8 +137,8 @@ menu. Put this right after `<body>` in the staff layout:
 ```
 
 It renders only for people signed in through Clauth (so customers and the old login never see it). It loads
-`https://auth.thecakelabs.com/bar/v1` and reads `/auth/clauth/bar` (a kit route that asks Clauth with the session's
-token — the browser never holds a Clauth token). Allow it in your CSP: `script-src https://auth.thecakelabs.com`.
+`https://auth.example.com/bar/v1` and reads `/auth/clauth/bar` (a kit route that asks Clauth with the session's
+token — the browser never holds a Clauth token). Allow it in your CSP: `script-src https://auth.example.com`.
 
 **Organization switcher.** It appears when the person uses this app in more than one org. Picking one fires a
 cancelable `clauth-org-change` event (`event.detail.org` = slug) on `<clauth-bar>`. If you don't handle it, the bar
@@ -158,9 +158,9 @@ sends Laravel's `X-XSRF-TOKEN`). To post notes from your deploy script, register
 app in Clauth and:
 
 ```bash
-TOKEN=$(curl -s https://auth.thecakelabs.com/oauth/token -d grant_type=client_credentials \
+TOKEN=$(curl -s https://auth.example.com/oauth/token -d grant_type=client_credentials \
   -d client_id=$CLAUTH_M2M_ID -d client_secret=$CLAUTH_M2M_SECRET -d scope=updates:write | jq -r .access_token)
-curl -s https://auth.thecakelabs.com/api/v1/release-notes -H "Authorization: Bearer $TOKEN" \
+curl -s https://auth.example.com/api/v1/release-notes -H "Authorization: Bearer $TOKEN" \
   -d version=v0.17.0 -d title="Receipts upload faster" --data-urlencode body="$(cat RELEASE_NOTES.txt)"
 ```
 
@@ -185,7 +185,7 @@ Route::middleware('clauth.api')->group(function () {
 
 - **Expo / React Native:** register a second client on the same app in Clauth, type **Mobile app or SPA** (no
   secret), redirect `xpenses://auth/callback`. Use `expo-auth-session` with PKCE and discovery
-  `https://auth.thecakelabs.com`, scopes `openid profile email clauth offline_access`. Keep tokens in
+  `https://auth.example.com`, scopes `openid profile email clauth offline_access`. Keep tokens in
   `expo-secure-store` and send the access token as the bearer.
 - **Server-to-server:** a client of type *Server-to-server* uses client credentials. Its tokens have no user
   (`sub` = `client_…`); use `clauth.api:optional-user`.
@@ -217,6 +217,6 @@ Releasing a kit change: commit, `git tag v0.1.1 && git push origin main v0.1.1`,
 
 ## Non-Laravel apps
 
-Any OIDC client library works. Discovery is at `https://auth.thecakelabs.com/.well-known/openid-configuration`,
+Any OIDC client library works. Discovery is at `https://auth.example.com/.well-known/openid-configuration`,
 PKCE (S256) is required, and the access token's `orgs` claim holds roles and permissions per organization. The
 plain-PHP sample in the Clauth repo (`tools/demo-client/`) shows the whole flow, including offline JWT checks, in about 80 lines.
