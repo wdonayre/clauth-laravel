@@ -30,6 +30,8 @@ class ClauthServiceProvider extends ServiceProvider
         \Illuminate\Cookie\Middleware\EncryptCookies::except(['clauth_org']);
 
         // @clauthBar — the required Clauth top bar. Renders only for people signed in through Clauth.
+        // @clauthSignInLabel — "Continue with CakesbyGrace Account" (or "Sign in with Clauth"), from Clauth's brand for this app.
+        \Illuminate\Support\Facades\Blade::directive('clauthSignInLabel', fn () => "<?php echo e(app(\\Clauth\\Laravel\\Clauth::class)->signInLabel()); ?>");
         \Illuminate\Support\Facades\Blade::directive('clauthBar', fn ($org = null) => "<?php echo app(\\Clauth\\Laravel\\Clauth::class)->barHtml({$org}); ?>");
 
         $router->aliasMiddleware('clauth.api', AuthenticateWithClauthToken::class);

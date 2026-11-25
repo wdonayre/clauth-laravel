@@ -162,6 +162,36 @@ class Clauth
     }
 
     /**
+     * How this app names its sign-in (branded accounts, Clauth 0.28+): ['level', 'account_name', 'button', 'logo',
+     * 'color', 'login_url', 'account_url', …]. Cached for an hour; falls back to Clauth's own wording if unreachable.
+     */
+    public function brand(): array
+    {
+        $fallback = ['level' => 'clauth', 'name' => 'Clauth', 'account_name' => 'Clauth account', 'button' => 'Sign in with Clauth', 'logo' => null, 'color' => null];
+        $issuer = rtrim((string) ($this->config['issuer'] ?? ''), '/');
+        $app = (string) ($this->config['audience'] ?? '');
+        if ($issuer === '' || $app === '') {
+            return $fallback;
+        }
+
+        return \Illuminate\Support\Facades\Cache::remember('clauth:brand:'.md5($issuer.$app), 3600, function () use ($issuer, $app, $fallback) {
+            try {
+                $r = \Illuminate\Support\Facades\Http::timeout(5)->acceptJson()->get($issuer.'/api/v1/brand', ['app' => $app]);
+
+                return $r->successful() && is_array($r->json()) ? $r->json() + $fallback : $fallback;
+            } catch (\Throwable) {
+                return $fallback;
+            }
+        });
+    }
+
+    /** "Continue with CakesbyGrace Account" or "Sign in with Clauth": use it as the sign-in button's text. */
+    public function signInLabel(): string
+    {
+        return (string) ($this->brand()['button'] ?? 'Sign in with Clauth');
+    }
+
+    /**
      * Run $handler for a verified Clauth webhook: Clauth::onWebhook('access.granted', fn (WebhookReceived $e) => …).
      * '*' = every event. To replace the kit's own user handling, set clauth.webhooks.manage_users = false.
      */

@@ -171,6 +171,19 @@ Posting the same `version` again updates that note instead of adding another.
 Tell the bar which org the page shows with `@clauthBar($orgSlug)` (or the `org` attribute) when it isn't the cookie.
 Clauth › Apps shows "Clauth bar: seen …" for each app, so you can see which apps have it.
 
+### Sign-in button text (branded accounts)
+
+If the app's organization brands its accounts in Clauth, people know their login as e.g. "CakesbyGrace Account", not
+"Clauth". Use Clauth's wording on the button instead of hard-coding it:
+
+```blade
+<a class="btn" href="{{ route('clauth.redirect') }}">@clauthSignInLabel</a>   {{-- "Continue with CakesbyGrace Account" --}}
+```
+
+`Clauth::brand()` returns the rest (`logo`, `color`, `account_name`, `account_url`, `login_url`) from
+`GET {issuer}/api/v1/brand?app={audience}`, cached for an hour; if Clauth can't be reached it says "Sign in with Clauth".
+For SPAs, pass `Clauth::brand()` to the page (Inertia shared props) or let `@clauth/react`'s `<SignInButton />` load it.
+
 ### 7. Keep accounts in step (webhooks)
 
 Without this, the app only learns about a person the first time they sign in. With it, giving someone access in
