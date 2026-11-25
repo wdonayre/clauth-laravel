@@ -44,6 +44,12 @@ class ClauthServiceProvider extends ServiceProvider
                 ->setClauth($c['issuer'], $app->make(TokenVerifier::class), $c['login_url'] ?? null);
         });
 
+        // Webhook receiver (no session/CSRF; the signature is the check) when a secret is set.
+        if (config('clauth.webhooks.secret')) {
+            Route::post(config('clauth.webhooks.path', 'clauth/webhook'), \Clauth\Laravel\Http\Controllers\WebhookController::class)
+                ->middleware('throttle:600,1')->name('clauth.webhook');
+        }
+
         // The manifest is always served; sign-in routes only when CLAUTH_ENABLED=true.
         Route::get('/.well-known/clauth.json', [ClauthController::class, 'manifest'])->name('clauth.manifest');
         $r = config('clauth.routes');

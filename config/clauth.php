@@ -39,6 +39,18 @@ return [
         'guard' => null,                       // auth guard for web sign-in (null = default)
     ],
 
+    // Webhooks (Clauth › Apps › your app › Webhooks): Clauth tells the app when someone gets access, changes role,
+    // loses access or is switched off, so their account exists before they first sign in. The route is
+    // registered only when a secret is set. Point the endpoint at https://<your app>/clauth/webhook.
+    'webhooks' => [
+        'secret' => env('CLAUTH_WEBHOOK_SECRET'),
+        'path' => 'clauth/webhook',
+        'tolerance_seconds' => 300,
+        'manage_users' => true,                // default handler: create / update / deactivate the local user
+        'create_users' => true,                // access.granted creates the local user if there is none
+        'active_column' => 'clauth_active',    // set false when no access is left (skipped if the column is missing)
+    ],
+
     // Which organization a request is about (Xpenses-style header), for `clauth.can` checks.
     'org_header' => 'X-Organization',
     'org_route_parameter' => 'org',

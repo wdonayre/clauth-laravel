@@ -16,6 +16,8 @@ organization.** Data rules (own team, ₱ limits, "only my store") stay in the a
 
 Tested 2026-11-08 against local Clauth with a fresh Laravel 12 app: sign-in, linking by email, `clauth.can` 200/403,
 role change applied after refresh, disabled user signed out, `clauth.api` 401/200, manifest route.
+Webhook receiver (v0.6.0) tested 2026-11-25 with a fresh Laravel 13 app: signature, stale and replayed deliveries,
+create / link by email / update / deactivate.
 
 ---
 
@@ -168,6 +170,43 @@ Posting the same `version` again updates that note instead of adding another.
 
 Tell the bar which org the page shows with `@clauthBar($orgSlug)` (or the `org` attribute) when it isn't the cookie.
 Clauth › Apps shows "Clauth bar: seen …" for each app, so you can see which apps have it.
+
+### 7. Keep accounts in step (webhooks)
+
+Without this, the app only learns about a person the first time they sign in. With it, giving someone access in
+Clauth creates their account in the app straight away, and taking it away (or switching their Clauth account off)
+marks it inactive.
+
+1. Publish and run the kit's migrations (adds `users.clauth_active`):
+   `php artisan vendor:publish --tag=clauth-migrations && php artisan migrate`
+2. In Clauth: Apps › your app › **Webhooks** › Add an endpoint: `https://<your app>/clauth/webhook`.
+3. Put the secret it shows once in `.env` as `CLAUTH_WEBHOOK_SECRET=whsec_…`. The route exists only when it is set
+   (no session or CSRF; every request is checked against the signature and must be under 5 minutes old).
+4. Press **Send test** in Clauth; it should say *Delivered*.
+
+What the kit does by default (`webhooks.manage_users`):
+
+| Event | Local user |
+|---|---|
+| `access.granted`, `access.changed`, `invite.accepted` | found by `clauth_sub`, else an unlinked account with the same email is linked, else created; `clauth_active = true` |
+| `access.removed` | `clauth_active = false` when `still_in` is empty (no access left in any organization) |
+| `user.updated` | name and email |
+| `user.disabled` / `user.enabled` | `clauth_active` false / true |
+
+Repeated deliveries (same `Clauth-Delivery`) and late, older events for the same person are ignored. Stop
+inactive people at your own sign-in and API checks, e.g. `abort_unless($user->clauth_active, 403)`.
+
+Your own handling, alongside or instead of the default (`'manage_users' => false`):
+
+```php
+// AppServiceProvider::boot()
+Clauth::onWebhook('access.granted', function (\Clauth\Laravel\Events\WebhookReceived $e) {
+    // $e->user = the local user (when the kit handled it), $e->data['org'], $e->data['roles'], $e->data['permissions']
+});
+```
+
+Missed something (the app was down for a day)? Clauth retries for about 34 hours; after that, call
+`GET /api/v1/apps/{app}/people?since=…` with the app's server client (scope `users:read`) to catch up.
 
 ---
 

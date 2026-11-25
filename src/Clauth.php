@@ -161,6 +161,19 @@ class Clauth
         ]));
     }
 
+    /**
+     * Run $handler for a verified Clauth webhook: Clauth::onWebhook('access.granted', fn (WebhookReceived $e) => …).
+     * '*' = every event. To replace the kit's own user handling, set clauth.webhooks.manage_users = false.
+     */
+    public function onWebhook(string $type, callable $handler): void
+    {
+        \Illuminate\Support\Facades\Event::listen(\Clauth\Laravel\Events\WebhookReceived::class, function ($e) use ($type, $handler) {
+            if ($type === '*' || $e->type === $type) {
+                $handler($e);
+            }
+        });
+    }
+
     public function resolveUsersUsing(callable $resolver): void
     {
         $this->userResolver = $resolver;
